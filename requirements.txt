@@ -1,0 +1,5 @@
+APScheduler==3.11.0
+python-dotenv==1.0.1
+slack_bolt==1.22.0
+slack_sdk==3.34.0
+tzlocal==5.2
