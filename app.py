@@ -6,6 +6,8 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from datetime import datetime, timedelta
 import json
 
+port = int(os.environ.get("PORT", 3000))
+
 # Load environment variables
 load_dotenv()
 
