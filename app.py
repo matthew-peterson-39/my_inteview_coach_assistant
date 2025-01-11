@@ -30,7 +30,7 @@ WELCOME_BLOCKS = [
         "type": "header",
         "text": {
             "type": "plain_text",
-            "text": "Welcome to the Launch! 🚀",
+            "text": "🎉 Welcome to the Launch! 🎉",
             "emoji": True
         }
     },
@@ -42,25 +42,24 @@ WELCOME_BLOCKS = [
         }
     },
     {
-        "type": "header",
+        "type": "section",
         "text": {
-            "type": "plain_text",
-            "text": "Your Day 1 Checklist:",
-            "emoji": True
+            "type": "mrkdwn",
+            "text": "Here's your Day 1 checklist to get you started:"
         }
     },
     {
         "type": "section",
         "text": {
             "type": "mrkdwn",
-            "text": "*1. Set Up Your Profile* – Make it personal! Create your username, upload a photo, and share a little about yourself.\n\n*2. Introduce Yourself* – Head to the #introduction channel and tell us who you are, what you're excited about, and what you're hoping to achieve here.\n\n*3. Fill Out the Career Readiness Questionnaire* – Check your DMs from <@U0861LS8R8F> and complete the questionnaire so we can support you in the best way possible."
+            "text": "1️⃣ *Set Up Your Profile* – Make it personal! Create your username, upload a photo, and share a little about yourself.\n\n2️⃣ *Introduce Yourself* – Head to the @introduction channel and tell us who you are, what you're excited about, and what you're hoping to achieve here.\n\n3️⃣ *Fill Out the Career Readiness Questionnaire* – Check your DMs from <@U0861LS8R8F> and complete the questionnaire so we can support you in the best way possible."
         }
     },
     {
         "type": "section",
         "text": {
             "type": "mrkdwn",
-            "text": "*4. Explore the Workspace* – Take a tour of our channels!"
+            "text": "4️⃣ *Explore the Workspace* – Take a tour of our channels! Check out:"
         }
     },
     {
@@ -74,21 +73,21 @@ WELCOME_BLOCKS = [
         "type": "section",
         "text": {
             "type": "mrkdwn",
-            "text": "*5. Post Questions* – Have a question? Drop it in the appropriate channel – we're all here to help each other out!"
+            "text": "5️⃣ *Post Questions* – Have a question? Drop it in the appropriate channel – we're all here to help each other out!"
         }
     },
     {
         "type": "section",
         "text": {
             "type": "mrkdwn",
-            "text": "*Need Help?* – Reach out to <@U0861LS8R8F> for any personal/private career coaching or any Slack support."
+            "text": "6️⃣ *Need Help?* – Reach out to <@U0861LS8R8F> for any personal/private career coaching or any Slack support."
         }
     },
     {
         "type": "section",
         "text": {
             "type": "mrkdwn",
-            "text": "*It's go time!* 🎉\nLet's kick off the new year with a fresh burst of energy and take our careers to the next level!\n\nSee you in the community!"
+            "text": "🔔 *It's go time!*\nLet's kick off the new year with a fresh burst of energy and take our careers to the next level! 💼✨\n\nSee you in the community! 🙋‍♀️🙋‍♂️"
         }
     }
 ]
