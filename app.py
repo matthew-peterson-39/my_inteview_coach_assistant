@@ -79,7 +79,7 @@ WELCOME_BLOCKS = [
         "type": "section",
         "text": {
             "type": "mrkdwn",
-            "text": "*Need Help?* – Reach out to @Rich Luby for any personal/private career coaching or any Slack support."
+            "text": "*Need Help?* – Reach out to <@U0861LS8R8F> for any personal/private career coaching or any Slack support."
         }
     },
     {
