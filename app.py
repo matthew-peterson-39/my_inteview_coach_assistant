@@ -66,7 +66,7 @@ WELCOME_BLOCKS = [
         "type": "section",
         "text": {
             "type": "mrkdwn",
-            "text": "• #introduction – Meet others and share your goals\n• #career-advice – Career tips and tricks\n• #networking – Connect with fellow professionals\n• #job-opportunities – Keep an eye out for new roles\n• #resources – All the tools and guides you need\n• #announcements – Stay up to date with important updates and events!"
+            "text": "• #introduction – Meet others and share your goals\n• #career-advice – Career tips and tricks\n• #networking – Connect with fellow professionals\n• #job-opportunities – Keep an eye out for new roles\n• #resources – All the tools and guides you need\n• #announcements – Stay up to date with important updates and events!\n• #resume-linkedin-review – If you have a resume or a LinkedIn you'd like us to review post it in this channel and specify your asks!"
         }
     },
     {
