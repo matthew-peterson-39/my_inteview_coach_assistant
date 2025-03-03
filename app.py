@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 from apscheduler.schedulers.background import BackgroundScheduler
 from datetime import datetime, timedelta
 import json
+import traceback
 
 port = int(os.environ.get("PORT", 3000))
 
@@ -110,7 +111,7 @@ QUESTIONS = [
 ]
 
 def create_question_block(question_num):
-    """Create a message block for a question"""
+    """Create a message block for a question using button approach"""
     return [
         {
             "type": "section",
@@ -120,27 +121,16 @@ def create_question_block(question_num):
             }
         },
         {
-            "type": "input",
-            "element": {
-                "type": "plain_text_input",
-                "action_id": "question_response",
-                "multiline": True
-            },
-            "label": {
-                "type": "plain_text",
-                "text": "Your Response"
-            }
-        },
-        {
             "type": "actions",
             "elements": [
                 {
                     "type": "button",
                     "text": {
                         "type": "plain_text",
-                        "text": "Submit Response"
+                        "text": "Answer Question"
                     },
-                    "action_id": "submit_response"
+                    "action_id": "open_response_modal",
+                    "value": str(question_num)  # Pass the question number as a value
                 }
             ]
         }
@@ -189,43 +179,108 @@ def send_questionnaire_start(client, user_id):
             
     except Exception as e:
         print(f"Error starting questionnaire: {e}")
+        traceback.print_exc()
 
-@app.action("submit_response")
-def handle_submission(ack, body, client):
-    """Handle when a user submits a response"""
-    print("Received submission. Body:", json.dumps(body, indent=2))
+@app.action("open_response_modal")
+def handle_open_modal(ack, body, client):
+    """Handle opening a modal for response"""
     ack()
     try:
         user_id = body["user"]["id"]
-        channel_id = body["container"]["channel_id"]
+        question_num = int(body["actions"][0]["value"])
         
-        # Get the response text from the input
-        block_id = list(body["state"]["values"].keys())[0]  # Get the first (and only) block ID
-        response_text = body["state"]["values"][block_id]["question_response"]["value"]
+        # Open a modal for the user to respond
+        client.views_open(
+            trigger_id=body["trigger_id"],
+            view={
+                "type": "modal",
+                "callback_id": "question_modal",
+                "private_metadata": json.dumps({
+                    "question_num": question_num,
+                    "channel_id": body["container"]["channel_id"]
+                }),  # Store question number and channel in metadata
+                "title": {
+                    "type": "plain_text",
+                    "text": f"Question {question_num + 1} of {len(QUESTIONS)}"
+                },
+                "submit": {
+                    "type": "plain_text",
+                    "text": "Submit"
+                },
+                "close": {
+                    "type": "plain_text",
+                    "text": "Cancel"
+                },
+                "blocks": [
+                    {
+                        "type": "section",
+                        "text": {
+                            "type": "mrkdwn",
+                            "text": QUESTIONS[question_num]
+                        }
+                    },
+                    {
+                        "type": "input",
+                        "block_id": "response_input",
+                        "element": {
+                            "type": "plain_text_input",
+                            "action_id": "response_text",
+                            "multiline": True
+                        },
+                        "label": {
+                            "type": "plain_text",
+                            "text": "Your Response"
+                        }
+                    }
+                ]
+            }
+        )
+    except Exception as e:
+        print(f"Error opening modal: {e}")
+        traceback.print_exc()
+
+@app.view("question_modal")
+def handle_modal_submission(ack, body, view, client):
+    """Handle modal submission"""
+    ack()
+    try:
+        user_id = body["user"]["id"]
+        metadata = json.loads(view["private_metadata"])
+        question_num = metadata["question_num"]
+        channel_id = metadata["channel_id"]
+        
+        response_text = view["state"]["values"]["response_input"]["response_text"]["value"]
+        
+        # Ensure user state exists
+        if user_id not in user_states:
+            user_states[user_id] = {
+                "current_question": question_num,
+                "responses": []
+            }
         
         # Store the response
-        current_q = user_states[user_id]["current_question"]
         user_states[user_id]["responses"].append({
-            "question": QUESTIONS[current_q],
+            "question": QUESTIONS[question_num],
             "response": response_text
         })
         
         # Move to next question or finish
-        current_q += 1
-        user_states[user_id]["current_question"] = current_q
+        next_question = question_num + 1
+        user_states[user_id]["current_question"] = next_question
         
-        if current_q < len(QUESTIONS):
+        if next_question < len(QUESTIONS):
             # Send next question
             client.chat_postMessage(
                 channel=channel_id,
-                blocks=create_question_block(current_q)
+                blocks=create_question_block(next_question)
             )
         else:
             # Questionnaire complete
             send_completion_messages(client, user_id, channel_id)
-            
+        
     except Exception as e:
-        print(f"Error handling submission: {e}")
+        print(f"Error handling modal submission: {e}")
+        traceback.print_exc()
 
 def send_completion_messages(client, user_id, channel_id):
     """Send completion messages to user and admin"""
@@ -283,6 +338,7 @@ def send_completion_messages(client, user_id, channel_id):
         
     except Exception as e:
         print(f"Error sending completion messages: {e}")
+        traceback.print_exc()
 
 @app.event("team_join")
 def handle_team_join(event, client):
@@ -311,6 +367,42 @@ def handle_team_join(event, client):
         
     except Exception as e:
         print(f"Error in team_join handler: {e}")
+        traceback.print_exc()
+
+@app.action("submit_response")
+def handle_legacy_submission(ack, body, client):
+    """Handle legacy button submissions from old message blocks"""
+    ack()
+    try:
+        user_id = body["user"]["id"]
+        channel_id = body["container"]["channel_id"]
+        
+        # Let the user know about the new approach
+        client.chat_postMessage(
+            channel=channel_id,
+            text="Please use the 'Answer Question' button to respond. I'll send you a new question now."
+        )
+        
+        # Get current question for this user
+        current_q = 0
+        if user_id in user_states:
+            current_q = user_states[user_id]["current_question"]
+        else:
+            # Initialize user state if it doesn't exist
+            user_states[user_id] = {
+                "current_question": 0,
+                "responses": []
+            }
+        
+        # Send the question again with the new UI
+        client.chat_postMessage(
+            channel=channel_id,
+            blocks=create_question_block(current_q)
+        )
+        
+    except Exception as e:
+        print(f"Error handling legacy submission: {e}")
+        traceback.print_exc()
 
 # Add a test command to manually trigger messages
 @app.command("/test-messages")
