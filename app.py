@@ -8,6 +8,7 @@ import json
 import traceback
 import googleapiclient.discovery
 from google.oauth2.credentials import Credentials
+from google.oauth2 import service_account
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 import pickle
