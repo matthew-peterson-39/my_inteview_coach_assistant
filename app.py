@@ -83,7 +83,7 @@ def get_google_credentials():
                 
         return creds
 
-def create_questionnaire_doc(user_name, user_id):
+def create_questionnaire_doc(user_name, user_id, client):
     """Create a new Google Doc directly with questionnaire content"""
     try:
         # Get credentials
@@ -178,23 +178,56 @@ def create_questionnaire_doc(user_name, user_id):
         else:
             print("No folder ID specified, document will remain in root Drive")
         
-        # 4. Share the document with Admin if email is specified
-        admin_email = os.environ.get("ADMIN_EMAIL")
-        if admin_email:
-            try:
+        # Share with Rich (admin) - hardcoded to ensure it always works
+        admin_email = "rich@myinterviewcoach.co"  
+        try:
+            drive_service.permissions().create(
+                fileId=document_id,
+                body={
+                    'type': 'user',
+                    'role': 'writer',
+                    'emailAddress': admin_email
+                }
+            ).execute()
+            print(f"Shared document with admin: {admin_email}")
+        except Exception as admin_error:
+            print(f"Error sharing document with admin: {admin_error}")
+        
+        # Share with the user - get email from Slack profile
+        try:
+            # Get user's email from Slack
+            user_info = client.users_info(user=user_id).get("user", {})
+            user_email = user_info.get("profile", {}).get("email")
+            
+            if user_email:
                 drive_service.permissions().create(
                     fileId=document_id,
                     body={
                         'type': 'user',
                         'role': 'writer',
-                        'emailAddress': admin_email
+                        'emailAddress': user_email
                     }
                 ).execute()
-                print(f"Shared document with admin: {admin_email}")
-            except Exception as share_error:
-                print(f"Error sharing document: {share_error}")
+                print(f"Shared document with user: {user_email} (from Slack profile)")
+            else:
+                print(f"Warning: Could not find email for user {user_id}. Document shared via link only.")
+        except Exception as user_error:
+            print(f"Error sharing document with user: {user_error}")
         
-        # 5. Get the document link
+        # Set sharing settings to "anyone with the link can edit" as fallback
+        try:
+            drive_service.permissions().create(
+                fileId=document_id,
+                body={
+                    'type': 'anyone',
+                    'role': 'writer'
+                }
+            ).execute()
+            print("Set document to be editable by anyone with the link")
+        except Exception as link_error:
+            print(f"Error setting link permissions: {link_error}")
+        
+        # Get the document link
         doc_metadata = drive_service.files().get(
             fileId=document_id,
             fields='webViewLink'
@@ -283,8 +316,8 @@ def send_questionnaire_link(client, user_id):
         user_info = client.users_info(user=user_id)["user"]
         user_name = user_info["real_name"]
         
-        # Create Google Doc for the user
-        doc_link = create_questionnaire_doc(user_name, user_id)
+        # Create Google Doc for the user - pass client to the function
+        doc_link = create_questionnaire_doc(user_name, user_id, client)
         
         if not doc_link:
             # If doc creation failed, notify admin

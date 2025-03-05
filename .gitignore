@@ -3,4 +3,4 @@
 __pycache__/
 *.pyc
 
-credentials.json
+credentials*.json
