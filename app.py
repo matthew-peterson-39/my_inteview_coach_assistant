@@ -35,28 +35,33 @@ SCOPES = ['https://www.googleapis.com/auth/documents',
 DOCS_FOLDER_ID = os.environ.get("DOCS_FOLDER_ID")
 
 def get_google_credentials():
-    """Get Google API credentials"""
-    creds = None
-    # The file token.pickle stores the user's access and refresh tokens
-    if os.path.exists('token.pickle'):
-        with open('token.pickle', 'rb') as token:
-            creds = pickle.load(token)
-    
-    # If credentials don't exist or are invalid, get new ones
-    if not creds or not creds.valid:
-        if creds and creds.expired and creds.refresh_token:
-            creds.refresh(Request())
-        else:
-            flow = InstalledAppFlow.from_client_secrets_file(
-                'credentials.json', SCOPES)
-            creds = flow.run_local_server(port=0)
+    """Get Google API credentials for both development and production"""
+    # Check if running in production (Railway)
+    if os.environ.get("RAILWAY_ENVIRONMENT"):
+        # Use service account credentials from environment variable
+        service_account_info = json.loads(os.environ.get("GOOGLE_SERVICE_ACCOUNT_JSON", "{}"))
+        creds = service_account.Credentials.from_service_account_info(
+            service_account_info, scopes=SCOPES)
+        return creds
+    else:
+        # Local development flow using token.pickle
+        creds = None
+        if os.path.exists('token.pickle'):
+            with open('token.pickle', 'rb') as token:
+                creds = pickle.load(token)
         
-        # Save the credentials for the next run
-        with open('token.pickle', 'wb') as token:
-            pickle.dump(creds, token)
-    
-    return creds
-
+        if not creds or not creds.valid:
+            if creds and creds.expired and creds.refresh_token:
+                creds.refresh(Request())
+            else:
+                flow = InstalledAppFlow.from_client_secrets_file(
+                    'credentials.json', SCOPES)
+                creds = flow.run_local_server(port=0)
+            
+            with open('token.pickle', 'wb') as token:
+                pickle.dump(creds, token)
+                
+        return creds
 def create_questionnaire_doc(user_name, user_id):
     """Create a new Google Doc directly with questionnaire content"""
     try:
